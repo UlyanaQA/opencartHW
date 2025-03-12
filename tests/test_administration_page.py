@@ -1,50 +1,40 @@
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from page_objects.admin_login_page import AdminLoginPage
 
 
 def test_username(browser):
-    browser.get(browser.url + "/administration")
-    wait = WebDriverWait(browser, 3)
-    username = wait.until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, "#input-username"))
+    admin_page = AdminLoginPage(browser)
+    admin_page.open_admin_login_page(browser.url + "/administration")
+    username_field = admin_page.is_username_field_present()
+    assert username_field is not None, (
+        "На странице не найдено поле ввода имени пользователя"
     )
-    assert username is not None, "На странице не найдено поле ввода имени пользователя"
 
 
 def test_password(browser):
-    browser.get(browser.url + "/administration")
-    wait = WebDriverWait(browser, 3)
-    password = wait.until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, "#input-password"))
-    )
-    assert password is not None, "На странице не найдено поле ввода пароля"
+    admin_page = AdminLoginPage(browser)
+    admin_page.open_admin_login_page(browser.url + "/administration")
+    password_field = admin_page.is_password_field_present()
+    assert password_field is not None, "На странице не найдено поле ввода пароля"
 
 
 def test_login_button(browser):
-    browser.get(browser.url + "/administration")
-    wait = WebDriverWait(browser, 3)
-    login_btn = wait.until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, ".btn.btn-primary"))
-    )
+    admin_page = AdminLoginPage(browser)
+    admin_page.open_admin_login_page(browser.url + "/administration")
+    login_btn = admin_page.is_login_button_present()
     assert login_btn is not None, "На странице не найдена кнопка логина"
 
 
 def test_form_header(browser):
-    browser.get(browser.url + "/administration")
-    wait = WebDriverWait(browser, 3)
-    header = wait.until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, ".card-header"))
-    )
-    assert header is not None, "На странице не найден заголовок окна логина"
+    admin_page = AdminLoginPage(browser)
+    admin_page.open_admin_login_page(browser.url + "/administration")
+    form_header = admin_page.is_form_header_present()
+    assert form_header is not None, "На странице не найден заголовок окна логина"
 
 
 def test_home_button(browser):
-    browser.get(browser.url + "/administration")
-    wait = WebDriverWait(browser, 3)
-    home_btn = wait.until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, "#header a"))
-    )
+    admin_page = AdminLoginPage(browser)
+    admin_page.open_admin_login_page(browser.url + "/administration")
+    home_btn = admin_page.is_home_button_present()
     assert home_btn is not None, (
         "На странице не найдена кнопка возврата на главную страницу"
     )

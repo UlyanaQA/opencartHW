@@ -1,25 +1,11 @@
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from page_objects.admin_login_page import AdminLoginPage
 
 
-# автотест логина-разлогина в админку с проверкой, что логин был выполнен
-def test_username(browser):
-    browser.get(browser.url + "/administration")
-    wait = WebDriverWait(browser, 3)
-    username = browser.find_element(By.CSS_SELECTOR, "#input-username.form-control")
-    username.clear()
-    username.send_keys("user")
-    password = browser.find_element(By.CSS_SELECTOR, "#input-password.form-control")
-    password.clear()
-    password.send_keys("bitnami")
-    submit_btn = browser.find_element(By.CSS_SELECTOR, "button[type='submit']")
-    submit_btn.click()
-    logout_btn = wait.until(
-        EC.visibility_of_element_located((By.CSS_SELECTOR, "#nav-logout.nav-item"))
+def test_login_logout(browser):
+    admin_page = AdminLoginPage(browser)
+    admin_page.open_admin_login_page(browser.url + "/administration")
+    admin_page.login("user", "bitnami")
+    admin_page.logout()
+    assert admin_page.is_login_form_displayed(), (
+        "Форма входа не отображается после выхода"
     )
-    logout_btn.click()
-    login_form = wait.until(
-        EC.visibility_of_element_located((By.CSS_SELECTOR, "#form-login"))
-    )
-    assert login_form.is_displayed(), "Форма входа не отображается после выхода"
