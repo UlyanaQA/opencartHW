@@ -1,7 +1,5 @@
 import pytest
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from page_objects.catalog_page import CatalogPage
 
 
 # автотест переключения валют: цены на товары меняются на странице каталога
@@ -9,21 +7,10 @@ from selenium.webdriver.support import expected_conditions as EC
     "selected_currency, currency", [("EUR", "€"), ("USD", "$"), ("GBP", "£")]
 )
 def test_changing_currency(browser, selected_currency, currency):
-    browser.get(browser.url + "/en-gb/catalog/desktops")
-    wait = WebDriverWait(browser, 3)
-    currency_switcher = wait.until(
-        EC.element_to_be_clickable((By.CSS_SELECTOR, "#form-currency"))
-    )
-    currency_switcher.click()
-    currency_choice = wait.until(
-        EC.visibility_of_element_located(
-            (By.CSS_SELECTOR, f"a[href='{selected_currency}']")
-        )
-    )
-    currency_choice.click()
-    wait.until(EC.visibility_of_element_located((By.ID, "product-category")))
-    desktops_prices = wait.until(
-        EC.visibility_of_all_elements_located((By.XPATH, "//div[@class='price']"))
-    )
+    catalog_page = CatalogPage(browser)
+    catalog_page.open_catalog_page(browser.url + "/en-gb/catalog/desktops")
+    catalog_page.switch_currency(selected_currency)
+    catalog_page.wait_for_product_category()
+    desktops_prices = catalog_page.get_desktops_prices()
     for price in desktops_prices:
         assert currency in price.text, f"Цена {price.text} не обновилась до {currency}"
