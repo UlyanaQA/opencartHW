@@ -1,8 +1,13 @@
+import allure
+
 from element_objects.header_element import HeaderElement
 import pytest
 
 
 # Переключение валют из верхнего меню opencart
+@allure.epic("Главная страница")
+@allure.feature("Изменение валюты")
+@allure.story("Проверка изменения валюты из верхнего меню opencart")
 @pytest.mark.parametrize(
     "currency_code,expected_symbol", [("EUR", "€"), ("GBP", "£"), ("USD", "$")]
 )

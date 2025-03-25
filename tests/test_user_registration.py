@@ -1,14 +1,23 @@
-from page_objects.register_page import RegisterPage
+import allure
+import pytest
+import uuid
 
 
-# Регистрация нового пользователя в магазине opencart
-def test_add_new_user(browser):
-    firstname = "Test12"
-    lastname = "Testov12"
-    email = "test12@mail.ru"
-    password = "12345678"
-    register_page = RegisterPage(browser)
-    register_page.open_register_page(browser.url + "/index.php?route=account/register")
+@allure.epic("Регистрация пользователей")
+@allure.feature("Процесс регистрации нового пользователя")
+@allure.story("Проверка создания учетной записи с уникальными данными")
+@pytest.mark.parametrize(
+    "firstname, lastname, email, password",
+    [
+        (
+            f"Test1_{uuid.uuid4().hex[:6]}",
+            f"Testov1_{uuid.uuid4().hex[:6]}",
+            f"test1_{uuid.uuid4().hex[:6]}@mail.ru",
+            "password123",
+        )
+    ],
+)
+def test_add_new_user(register_page, firstname, lastname, email, password):
     register_page.registration_add_user(firstname, lastname, email, password)
     success_message_present = register_page.wait_text("Your Account Has Been Created!")
     assert success_message_present, "Сообщение об успешной регистрации не найдено"

@@ -1,38 +1,44 @@
-from page_objects.product_page import ProductPage
+import allure
 
 
-def test_new_price(browser):
-    product_page = ProductPage(browser)
-    product_page.open_product_page(browser.url + "en-gb/product/desktops/apple-cinema")
-    new_price = product_page.is_new_price_present()
-    assert new_price is not None, "На странице не найдена новая цена товара"
+@allure.epic("Страница товара")
+@allure.feature("Элементы страницы товара")
+@allure.story("Проверка наличия новой цены товара")
+def test_new_price(product_page):
+    assert product_page.is_new_price_present(), (
+        "На странице не найдена новая цена товара"
+    )
 
 
-def test_add_to_wishlist(browser):
-    product_page = ProductPage(browser)
-    product_page.open_product_page(browser.url + "en-gb/product/desktops/apple-cinema")
-    wish_list = product_page.is_add_to_wishlist_button_present()
-    assert wish_list is not None, "На странице не найдена кнопка добавления в Избранное"
+@allure.epic("Страница товара")
+@allure.feature("Элементы страницы товара")
+@allure.story("Проверка наличия кнопки добавления в Избранное")
+def test_add_to_wishlist(product_page):
+    assert product_page.is_add_to_wishlist_button_present(), (
+        "На странице не найдена кнопка добавления в Избранное"
+    )
 
 
-def test_add_to_compare(browser):
-    product_page = ProductPage(browser)
-    product_page.open_product_page(browser.url + "en-gb/product/desktops/apple-cinema")
-    add_to_compare = product_page.is_add_to_compare_button_present()
-    assert add_to_compare is not None, (
+@allure.epic("Страница товара")
+@allure.feature("Элементы страницы товара")
+@allure.story("Проверка наличия кнопки добавления в сравнение")
+def test_add_to_compare(product_page):
+    assert product_page.is_add_to_compare_button_present(), (
         "На странице не найдена кнопка добавления в сравнение"
     )
 
 
-def test_add_to_cart(browser):
-    product_page = ProductPage(browser)
-    product_page.open_product_page(browser.url + "en-gb/product/desktops/apple-cinema")
-    add_to_cart = product_page.is_add_to_cart_button_present()
-    assert add_to_cart is not None, "На странице не найдена кнопка добавления в корзину"
+@allure.epic("Страница товара")
+@allure.feature("Элементы страницы товара")
+@allure.story("Проверка наличия кнопки добавления в корзину")
+def test_add_to_cart(product_page):
+    assert product_page.is_add_to_cart_button_present(), (
+        "На странице не найдена кнопка добавления в корзину"
+    )
 
 
-def test_product_photo(browser):
-    product_page = ProductPage(browser)
-    product_page.open_product_page(browser.url + "en-gb/product/desktops/apple-cinema")
-    photo = product_page.is_product_photo_present()
-    assert photo is not None, "На странице не найдено фото товара"
+@allure.epic("Страница товара")
+@allure.feature("Элементы страницы товара")
+@allure.story("Проверка наличия фото товара")
+def test_product_photo(product_page):
+    assert product_page.is_product_photo_present(), "На странице не найдено фото товара"

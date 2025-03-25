@@ -1,11 +1,15 @@
 import time
-from page_objects.main_page import MainPage
+
+import allure
 
 
 # Добавление в корзину товара с главной страницы и проверка того, что он появился в корзине
-def test_add_product_to_cart(browser):
-    main_page = MainPage(browser)
-    main_page.open(browser.url)
+
+
+@allure.epic("Главная страница")
+@allure.feature("Добавление товара в корзину")
+@allure.story("Проверка добавления товара с главной страницы")
+def test_add_product_to_cart(main_page):
     main_page.add_product_to_cart()
     main_page.wait_for_success_alert_disappear()
     time.sleep(0.7)
