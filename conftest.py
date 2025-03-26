@@ -22,6 +22,9 @@ def pytest_addoption(parser):
     )
     parser.addoption("--headless", action="store_true", help="headless_mode")
     parser.addoption("--url", action="store", default="http://192.168.0.173:8081/")
+    parser.addoption(
+        "--log_level", action="store", default="INFO", help="choose log level"
+    )
 
 
 @pytest.fixture()
@@ -63,17 +66,22 @@ def browser(request):
 
 
 @pytest.fixture
-def base_url(request) -> str:
+def logger(request):
+    log_level = request.config.getoption("--log_level")
+    logger = logging.getLogger(__name__)
+    logger.setLevel(level=log_level)
+    return logger
+
+
+@pytest.fixture
+def base_url(request, logger) -> str:
     return request.config.getoption("--url")
 
 
 @pytest.fixture
-def admin_login_page(browser, base_url):
+def admin_login_page(browser, base_url, logger):
     page = AdminLoginPage(browser)
     administration_url = f"{base_url}/administration"
-
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
 
     logger.info(f"Открытие страницы админа: {administration_url}")
     page.open(administration_url)
@@ -81,13 +89,10 @@ def admin_login_page(browser, base_url):
 
 
 @pytest.fixture
-def administration_page(browser, base_url):
+def administration_page(browser, base_url, logger):
     administration_page = AdministrationPage(browser)
     admin_page = AdminLoginPage(browser)
     admin_page.open(f"{base_url}/administration")
-
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
 
     logger.info("Авторизация как 'user' с паролем 'bitnami'")
     admin_page.login("user", "bitnami")
@@ -99,12 +104,9 @@ def administration_page(browser, base_url):
 
 
 @pytest.fixture
-def catalog_desktops_page(browser, base_url):
+def catalog_desktops_page(browser, base_url, logger):
     page = CatalogPage(browser)
     catalog_desktops_url = f"{base_url}/en-gb/catalog/desktops"
-
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
 
     logger.info(f"Открытие каталога desktops: {catalog_desktops_url}")
     page.open(catalog_desktops_url)
@@ -113,12 +115,9 @@ def catalog_desktops_page(browser, base_url):
 
 
 @pytest.fixture
-def catalog_laptops_page(browser, base_url):
+def catalog_laptops_page(browser, base_url, logger):
     page = CatalogPage(browser)
     catalog_laptops_url = f"{base_url}/en-gb/catalog/laptop-notebook"
-
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
 
     logger.info(f"Открытие каталога laptops: {catalog_laptops_url}")
     page.open(catalog_laptops_url)
@@ -127,12 +126,9 @@ def catalog_laptops_page(browser, base_url):
 
 
 @pytest.fixture
-def main_page(browser, base_url):
+def main_page(browser, base_url, logger):
     page = MainPage(browser)
     mainpage_url = f"{base_url}"
-
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
 
     logger.info(f"Открытие главной страницы: {mainpage_url}")
     page.open(base_url)
@@ -141,12 +137,9 @@ def main_page(browser, base_url):
 
 
 @pytest.fixture
-def product_page(browser, base_url):
+def product_page(browser, base_url, logger):
     page = ProductPage(browser)
     product_url = f"{base_url}/en-gb/product/desktops/apple-cinema"
-
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
 
     logger.info(f"Открытие каталога: {product_url}")
     page.open(product_url)
@@ -155,12 +148,9 @@ def product_page(browser, base_url):
 
 
 @pytest.fixture
-def register_page(browser, base_url):
+def register_page(browser, base_url, logger):
     page = RegisterPage(browser)
     register_url = f"{base_url}/index.php?route=account/register"
-
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
 
     logger.info(f"Открытие страницы регистрации: {register_url}")
     page.open(register_url)
@@ -169,14 +159,11 @@ def register_page(browser, base_url):
 
 
 @pytest.fixture
-def create_product(administration_page):
+def create_product(administration_page, logger):
     product_name = f"prod7_{uuid.uuid4().hex[:6]}"  # Уникальное имя продукта
     meta_tag = f"meta_tag_{uuid.uuid4().hex[:6]}"
     model = f"model_{uuid.uuid4().hex[:6]}"
     keyword = f"keyword_{uuid.uuid4().hex[:6]}"
-
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
 
     logger.info(f"Создание нового продукта: {product_name}")
     administration_page.products_click_add_new_product()

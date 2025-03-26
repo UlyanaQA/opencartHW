@@ -25,7 +25,6 @@ class AdministrationPage(BasePage):
 
     def __init__(self, browser):
         super().__init__(browser)
-        self.browser = browser
 
     @allure.step("Переход на страницу продуктов")
     def administration_go_to_product_page(self):

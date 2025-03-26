@@ -10,9 +10,11 @@ class HeaderElement(BasePage):
     CURRENCY_SIGN = (By.CSS_SELECTOR, ".dropdown>a>strong")
 
     def header_switch_currency(self, currency_code):
-        self.wait_for_element_present(self.CURRENCY).click()
-
-        # Динамически формируем локатор для выбранной валюты
+        self.log_action(f"Переключение валюты на {currency_code}")
+        currency_dropdown = self.wait_for_element_visible(self.CURRENCY)
+        currency_dropdown.click()
         currency_item_locator = (By.CSS_SELECTOR, f"a[href='{currency_code}']")
-        self.wait_for_element_present(currency_item_locator).click()
-        return self.get_text(self.CURRENCY_SIGN)
+        currency_item = self.wait_for_element_visible(currency_item_locator)
+        currency_item.click()
+        currency_sign_element = self.wait_for_element_visible(self.CURRENCY_SIGN)
+        return currency_sign_element.text.strip()
