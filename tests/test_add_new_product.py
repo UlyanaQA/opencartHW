@@ -1,7 +1,6 @@
 import allure
 import pytest
 import uuid
-import logging
 
 
 # Добавление нового товара в разделе администратора
@@ -20,36 +19,24 @@ import logging
     ],
 )
 def test_add_new_product(administration_page, product_name, meta_tag, model, keyword):
-    try:
-        with allure.step("Клик по кнопке 'Add New'"):
-            administration_page.products_click_add_new_product()
+    with allure.step("Клик по кнопке 'Add New'"):
+        administration_page.products_click_add_new_product()
 
-        with allure.step("Заполнение формы нового продукта"):
-            administration_page.products_add_new_product(
-                product_name, meta_tag, model, keyword
-            )
-
-        with allure.step("Переход на страницу продуктов"):
-            administration_page.administration_go_to_product_page()
-
-        with allure.step("Поиск созданного продукта"):
-            product_element = administration_page.find_product_by_name(product_name)
-
-        assert product_element is not None, "Продукт не найден в таблице"
-
-        with allure.step("Проверка названия продукта"):
-            actual_text = product_element.text.strip().split("\n")[0]
-            assert actual_text == product_name, (
-                f"Название продукта не совпадает: {actual_text}"
-            )
-
-    except AssertionError as e:
-        logging.error(f"Ошибка в тесте: {e}")
-
-        allure.attach(
-            administration_page.browser.get_screenshot_as_png(),
-            name="screenshot_on_failure",
-            attachment_type=allure.attachment_type.PNG,
+    with allure.step("Заполнение формы нового продукта"):
+        administration_page.products_add_new_product(
+            product_name, meta_tag, model, keyword
         )
 
-        raise AssertionError(str(e))
+    with allure.step("Переход на страницу продуктов"):
+        administration_page.administration_go_to_product_page()
+
+    with allure.step("Поиск созданного продукта"):
+        product_element = administration_page.find_product_by_name(product_name)
+
+    assert product_element is not None, "Продукт не найден в таблице"
+
+    with allure.step("Проверка названия продукта"):
+        actual_text = product_element.text.strip().split("\n")[0]
+        assert actual_text == product_name, (
+            f"Название продукта не совпадает: {actual_text}"
+        )

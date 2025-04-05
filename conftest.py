@@ -1,9 +1,8 @@
 import logging
+import os
 import uuid
 import pytest
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options as ChromeOptions
-from selenium.webdriver.edge.options import Options as EdgeOptions
 
 from page_objects.admin_login_page import AdminLoginPage
 from page_objects.administration_page import AdministrationPage
@@ -25,40 +24,73 @@ def pytest_addoption(parser):
     parser.addoption(
         "--log_level", action="store", default="INFO", help="choose log level"
     )
+    parser.addoption("--executor", action="store", default="1192.168.0.173")
+    parser.addoption("--logs", action="store_true")
+    parser.addoption("--ver", action="store", help="Версия браузера")
 
 
 @pytest.fixture()
 def browser(request):
-    browser_name = request.config.getoption("browser")
-    headless = request.config.getoption("headless")
+    browser_name = request.config.getoption("--browser").lower()
+    headless = request.config.getoption("--headless")
     url = request.config.getoption("--url")
+    ver = request.config.getoption("--ver")
+    executor = request.config.getoption("--executor")
+    logs = request.config.getoption("--logs")
 
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
 
-    if browser_name in ["chrome", "ch"]:
-        options = ChromeOptions()
-        if headless:
-            options.add_argument("--headless=new")
-        logger.info(
-            f"инициализация {browser_name} браузера в режиме {'headless' if headless else 'normal'}"
-        )
-        driver = webdriver.Chrome(options=options)
-    elif browser_name in ["edge", "ed"]:
-        options = EdgeOptions()
-        if headless:
-            options.add_argument("--headless")
-        logger.info(
-            f"Инициализация {browser_name} браузера в режиме {'headless' if headless else 'normal'}"
-        )
-        driver = webdriver.Edge(options=options)
+    if executor == "local":
+        if browser_name in ["chrome", "ch"]:
+            options = webdriver.ChromeOptions()
+            if headless:
+                options.add_argument("--headless=new")
+            logger.info(
+                f"Инициализация {browser_name} в режиме {'headless' if headless else 'normal'}"
+            )
+            driver = webdriver.Chrome(options=options)
+        elif browser_name in ["edge", "ed"]:
+            options = webdriver.EdgeOptions()
+            if headless:
+                options.add_argument("--headless")
+            logger.info(
+                f"Инициализация {browser_name} в режиме {'headless' if headless else 'normal'}"
+            )
+            driver = webdriver.Edge(options=options)
+        else:
+            raise ValueError(f"Browser {browser_name} is not supported")
     else:
-        raise ValueError(f"Браузер {browser_name} не поддерживается")
+        options = (
+            webdriver.ChromeOptions()
+            if browser_name in ["chrome", "ch"]
+            else webdriver.EdgeOptions()
+        )
+
+        selenoid_options = {
+            "name": request.node.name,
+            "enableVNC": True,
+            "enableVideo": True,
+            "enableLogs": logs,
+        }
+
+        capabilities = {
+            "browserName": browser_name,
+            "browserVersion": ver,
+            "selenoid:options": selenoid_options,
+        }
+
+        logger.info(f"Запуск {browser_name} через Selenoid ({executor})")
+        driver = webdriver.Remote(
+            command_executor=f"http://{executor}:4444/wd/hub",
+            options=options,  # Передаем options
+        )
+        driver.capabilities.update(capabilities)
 
     driver.maximize_window()
-    request.addfinalizer(driver.close)
+    request.addfinalizer(driver.quit)
 
-    logger.info(f"Открытие адреса: {url}")
+    logger.info(f"Открытие базового URL: {url}")
     driver.get(url)
     driver.url = url
 
@@ -71,6 +103,21 @@ def logger(request):
     logger = logging.getLogger(__name__)
     logger.setLevel(level=log_level)
     return logger
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    outcome = yield
+    report = outcome.get_result()
+
+    if report.when == "call" and report.failed:
+        browser = item.funcargs.get("browser")
+        if browser:
+            screenshot_dir = "screenshots"
+            os.makedirs(screenshot_dir, exist_ok=True)
+            file_name = os.path.join(screenshot_dir, f"{item.name}.png")
+            browser.save_screenshot(file_name)
+            print(f"\n📸 Скриншот сохранён: {file_name}")
 
 
 @pytest.fixture

@@ -1,7 +1,6 @@
 import allure
 import pytest
 import uuid
-import logging
 
 
 @allure.epic("Регистрация пользователей")
@@ -19,25 +18,11 @@ import logging
     ],
 )
 def test_add_new_user(register_page, firstname, lastname, email, password):
-    try:
-        with allure.step(f"Регистрация пользователя {email}"):
-            register_page.registration_add_user(firstname, lastname, email, password)
+    with allure.step(f"Регистрация пользователя {email}"):
+        register_page.registration_add_user(firstname, lastname, email, password)
 
-        with allure.step("Ожидание сообщения об успешной регистрации"):
-            success_message_present = register_page.wait_text(
-                "Your Account Has Been Created!"
-            )
-            assert success_message_present, (
-                "Сообщение об успешной регистрации не найдено"
-            )
-
-    except AssertionError as e:
-        logging.error(f"Ошибка в тесте: {str(e)}")
-
-        allure.attach(
-            register_page.browser.get_screenshot_as_png(),
-            name="screenshot_on_failure",
-            attachment_type=allure.attachment_type.PNG,
+    with allure.step("Ожидание сообщения об успешной регистрации"):
+        success_message_present = register_page.wait_text(
+            "Your Account Has Been Created!"
         )
-
-        raise AssertionError(str(e))
+        assert success_message_present, "Сообщение об успешной регистрации не найдено"
