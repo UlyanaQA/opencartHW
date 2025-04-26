@@ -3,8 +3,9 @@ import uuid
 import pytest
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
-from selenium.webdriver.edge.options import Options as EdgeOptions
-
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.firefox.service import Service as FirefoxService
 from page_objects.admin_login_page import AdminLoginPage
 from page_objects.administration_page import AdministrationPage
 from page_objects.catalog_page import CatalogPage
@@ -21,7 +22,7 @@ def pytest_addoption(parser):
         "--browser", action="store", default="chrome", help="choose browser"
     )
     parser.addoption("--headless", action="store_true", help="headless_mode")
-    parser.addoption("--url", action="store", default="http://192.168.0.173:8081/")
+    parser.addoption("--url", action="store", default="http://192.168.31.244:8081/")
     parser.addoption(
         "--log_level", action="store", default="INFO", help="choose log level"
     )
@@ -36,33 +37,50 @@ def browser(request):
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
 
+    user_data_dir = f"/tmp/{uuid.uuid4().hex}"
+
     if browser_name in ["chrome", "ch"]:
         options = ChromeOptions()
         if headless:
             options.add_argument("--headless=new")
-        logger.info(
-            f"инициализация {browser_name} браузера в режиме {'headless' if headless else 'normal'}"
-        )
-        driver = webdriver.Chrome(options=options)
-    elif browser_name in ["edge", "ed"]:
-        options = EdgeOptions()
+            options.add_argument("--disable-gpu")
+            options.add_argument("--no-sandbox")
+            options.add_argument("--disable-dev-shm-usage")
+            options.add_argument("--remote-debugging-port=9222")
+        else:
+            options.add_argument("--window-size=1920,1080")
+
+        options.binary_location = "/usr/bin/chromium"
+        options.add_argument(f"--user-data-dir={user_data_dir}")
+
+        service = ChromeService(executable_path="/usr/bin/chromedriver")
+        driver = webdriver.Chrome(service=service, options=options)
+
+    elif browser_name in ["firefox", "ff"]:
+        options = FirefoxOptions()
         if headless:
             options.add_argument("--headless")
-        logger.info(
-            f"Инициализация {browser_name} браузера в режиме {'headless' if headless else 'normal'}"
-        )
-        driver = webdriver.Edge(options=options)
+            options.add_argument("--disable-gpu")
+            options.add_argument("--no-sandbox")
+        else:
+            options.add_argument("--width=1920")
+            options.add_argument("--height=1080")
+
+        options.add_argument(f"user-data-dir={user_data_dir}")
+        options.binary_location = "/usr/bin/firefox"
+
+        service = FirefoxService(executable_path="/usr/bin/geckodriver")
+        driver = webdriver.Firefox(service=service, options=options)
+
     else:
         raise ValueError(f"Браузер {browser_name} не поддерживается")
 
     driver.maximize_window()
-    request.addfinalizer(driver.close)
+    request.addfinalizer(driver.quit)
 
     logger.info(f"Открытие адреса: {url}")
     driver.get(url)
     driver.url = url
-
-    return driver
 
 
 @pytest.fixture
