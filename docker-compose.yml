@@ -1,0 +1,73 @@
+version: '3.8'
+
+networks:
+  selenoid:
+    external: true
+
+services:
+  mariadb:
+    image: docker.io/bitnami/mariadb:11.2
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - MARIADB_USER=bn_opencart
+      - MARIADB_DATABASE=bitnami_opencart
+    ports:
+      - '3306:3306'
+    networks:
+      - selenoid
+
+  opencart:
+    image: bitnami/opencart:4.0.2-3-debian-12-r33
+    ports:
+      - '${OPENCART_PORT}:8080'
+      - '443:8443'
+    environment:
+      - OPENCART_HOST=${LOCAL_IP}:${OPENCART_PORT}
+      - OPENCART_DATABASE_HOST=mariadb
+      - OPENCART_DATABASE_PORT_NUMBER=3306
+      - OPENCART_DATABASE_USER=bn_opencart
+      - OPENCART_DATABASE_NAME=bitnami_opencart
+      - ALLOW_EMPTY_PASSWORD=yes
+    depends_on:
+      - mariadb
+    networks:
+      - selenoid
+
+  phpadmin:
+    image: 'phpmyadmin/phpmyadmin:latest'
+    ports:
+      - '${PHPADMIN_PORT}:80'
+    environment:
+      - PMA_HOST=mariadb
+      - PMA_PORT=3306
+      - PMA_USER=bn_opencart
+    networks:
+      - selenoid
+
+  selenoid:
+    image: aerokube/selenoid:latest
+    networks:
+      - selenoid
+    volumes:
+      - "${PWD}/config:/etc/selenoid"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "${PWD}/video:/opt/selenoid/video"
+    ports:
+      - "4444:4444"
+
+  selenoid-ui:
+    image: aerokube/selenoid-ui:1.10.11
+    networks:
+      - selenoid
+    ports:
+      - "8090:8080"
+    command: ["--selenoid-uri", "http://selenoid:4444"]
+
+  tests:
+    build: .
+    image: opencart-tests
+    networks:
+      - selenoid
+    depends_on:
+      - opencart
+    command: ["./wait-for-it.sh", "opencart:8080", "--", "pytest", "tests/", "--browser", "chrome", "--executor", "selenoid", "--url", "http://opencart:8080"]
