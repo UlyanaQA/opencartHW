@@ -3,7 +3,8 @@ import os
 import uuid
 import pytest
 from selenium import webdriver
-
+from selenium.webdriver.edge.options import Options as EdgeOptions
+from selenium.webdriver.chrome.options import Options as ChromeOptions
 from page_objects.admin_login_page import AdminLoginPage
 from page_objects.administration_page import AdministrationPage
 from page_objects.catalog_page import CatalogPage
@@ -20,11 +21,11 @@ def pytest_addoption(parser):
         "--browser", action="store", default="chrome", help="choose browser"
     )
     parser.addoption("--headless", action="store_true", help="headless_mode")
-    parser.addoption("--url", action="store", default="http://192.168.0.173:8081/")
+    parser.addoption("--url", action="store", default="http://opencart:8080/")
     parser.addoption(
         "--log_level", action="store", default="INFO", help="choose log level"
     )
-    parser.addoption("--executor", action="store", default="1192.168.0.173")
+    parser.addoption("--executor", action="store", default="selenoid")
     parser.addoption("--logs", action="store_true")
     parser.addoption("--ver", action="store", help="Версия браузера")
 
@@ -34,7 +35,7 @@ def browser(request):
     browser_name = request.config.getoption("--browser").lower()
     headless = request.config.getoption("--headless")
     url = request.config.getoption("--url")
-    ver = request.config.getoption("--ver")
+    ver = request.config.getoption("--ver") or "latest"
     executor = request.config.getoption("--executor")
     logs = request.config.getoption("--logs")
 
@@ -42,50 +43,50 @@ def browser(request):
     logger.setLevel(logging.INFO)
 
     if executor == "local":
+        # Локальный запуск (без Selenoid)
         if browser_name in ["chrome", "ch"]:
-            options = webdriver.ChromeOptions()
+            options = ChromeOptions()
             if headless:
                 options.add_argument("--headless=new")
-            logger.info(
-                f"Инициализация {browser_name} в режиме {'headless' if headless else 'normal'}"
-            )
+            logger.info(f"Инициализация {browser_name} в режиме {'headless' if headless else 'normal'}")
             driver = webdriver.Chrome(options=options)
         elif browser_name in ["edge", "ed"]:
-            options = webdriver.EdgeOptions()
+            options = EdgeOptions()
             if headless:
                 options.add_argument("--headless")
-            logger.info(
-                f"Инициализация {browser_name} в режиме {'headless' if headless else 'normal'}"
-            )
+            logger.info(f"Инициализация {browser_name} в режиме {'headless' if headless else 'normal'}")
             driver = webdriver.Edge(options=options)
         else:
-            raise ValueError(f"Browser {browser_name} is not supported")
+            raise ValueError(f"Браузер {browser_name} не поддерживается")
     else:
-        options = (
-            webdriver.ChromeOptions()
-            if browser_name in ["chrome", "ch"]
-            else webdriver.EdgeOptions()
-        )
+        # Запуск через Selenoid
+        logger.info(f"Запуск {browser_name} через Selenoid ({executor})")
 
-        selenoid_options = {
-            "name": request.node.name,
+        # Создание опций браузера
+        if browser_name in ["chrome", "ch"]:
+            options = ChromeOptions()
+        elif browser_name in ["edge", "ed"]:
+            options = EdgeOptions()
+        else:
+            raise ValueError(f"Браузер {browser_name} не поддерживается")
+
+        # Добавление Selenoid capabilities через options
+        options.browser_version = ver
+        options.set_capability("selenoid:options", {
             "enableVNC": True,
             "enableVideo": True,
             "enableLogs": logs,
-        }
+            "name": request.node.name
+        })
 
-        capabilities = {
-            "browserName": browser_name,
-            "browserVersion": ver,
-            "selenoid:options": selenoid_options,
-        }
+        # URL Selenoid (внутри Docker-сети)
+        executor_url = f"http://{executor}:4444/wd/hub"
 
-        logger.info(f"Запуск {browser_name} через Selenoid ({executor})")
+        # Инициализация удалённого драйвера
         driver = webdriver.Remote(
-            command_executor=f"http://{executor}:4444/wd/hub",
-            options=options,  # Передаем options
+            command_executor=executor_url,
+            options=options
         )
-        driver.capabilities.update(capabilities)
 
     driver.maximize_window()
     request.addfinalizer(driver.quit)
