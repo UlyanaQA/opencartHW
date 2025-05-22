@@ -1,7 +1,10 @@
 # Базовый образ с Python
 FROM python:3.12-slim
 
-# Установка зависимостей для браузеров
+# Отключение интерактивного режима debconf
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Установка системных зависимостей
 RUN apt-get update && apt-get install -y \
     xvfb \
     xauth \
@@ -24,7 +27,7 @@ RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.34.0/geckod
     chmod +x /usr/local/bin/geckodriver && \
     rm /tmp/geckodriver.tar.gz
 
-# Установка chromedriver через символическую ссылку
+# Установка chromedriver
 RUN ln -sf /usr/lib/chromium/chromedriver /usr/bin/chromedriver
 
 # Переменные окружения
@@ -35,6 +38,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     CHROME_DRIVER_BIN=/usr/bin/chromedriver \
     FIREFOX_BIN=/usr/bin/firefox-esr \
     GECKODRIVER_PATH=/usr/local/bin/geckodriver
+
+# Виртуальное окружение (рекомендуется)
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
 # Копирование зависимостей Python
 COPY requirements.txt /app/
