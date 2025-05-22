@@ -43,10 +43,10 @@ services:
 
 
   tests:
-    build: .
-    image: opencart-tests
-    networks:
-      - selenoid
+    build: ./tests
+    environment:
+      - OPENCART_HOST=opencart
     depends_on:
+      - selenoid
       - opencart
     command: ["./wait-for-it.sh", "opencart:8080", "--", "pytest", "tests/", "--browser", "chrome", "--executor", "selenoid", "--url", "http://opencart:8080"]
