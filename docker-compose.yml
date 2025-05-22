@@ -41,6 +41,10 @@ services:
     ports:
       - "4444:4444"
 
+  jenkins:
+    volumes:
+      - /var/jenkins_home/workspace/Run OpenCart Tests/.env:/path/in/container/.env
+
   tests:
     build: .
     image: opencart-tests
