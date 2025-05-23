@@ -43,7 +43,7 @@ services:
 
 
   tests:
-    build: ./tests
+    build: .
     environment:
       - OPENCART_HOST=opencart
     depends_on:
