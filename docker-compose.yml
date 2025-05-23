@@ -1,3 +1,5 @@
+version: '3.8'
+
 networks:
   selenoid:
     external: true
@@ -41,7 +43,6 @@ services:
     ports:
       - "4444:4444"
 
-
   tests:
     build: .
     environment:
@@ -49,4 +50,6 @@ services:
     depends_on:
       - selenoid
       - opencart
-    command: ["./wait-for-it.sh", "opencart:8080", "--", "pytest", "tests/", "--browser", "chrome", "--executor", "selenoid", "--url", "http://opencart:8080"]
+    networks:
+      - selenoid  # <--- Добавить подключение к сети
+    command: ["./wait-for-it.sh", "opencart:8080", "--", "pytest", "tests/", "--browser", "chrome", "--executor", "http://selenoid:4444", "--url", "http://opencart:8080"]
